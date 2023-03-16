@@ -1,9 +1,8 @@
 // app.js
-const http = require("http"); // (1)
+const http = require("http");
 const server = http.createServer();
 
 const users = [
-  // (2)
   {
     id: 1,
     name: "Rebekah Johnson",
@@ -42,8 +41,30 @@ const httpRequestListener = function (request, response) {
       response.end(JSON.stringify({ message: "pong" }));
     }
   } else if (method === "POST") {
-    // (3)
+    // users
     if (url === "/users") {
+      let body = "";
+
+      request.on("data", (data) => {
+        body += data;
+      });
+
+      // stream을 전부 받아온 이후에 실행
+      request.on("end", () => {
+        const user = JSON.parse(body);
+
+        users.push({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          password: user.password,
+        });
+
+        response.end(JSON.stringify({ message: "usersCreated" })); // (9)
+      });
+    }
+    // posts
+    else if (url === "/posts") {
       let body = ""; // (4)
 
       request.on("data", (data) => {
@@ -53,22 +74,21 @@ const httpRequestListener = function (request, response) {
       // stream을 전부 받아온 이후에 실행
       request.on("end", () => {
         // (6)
-        const user = JSON.parse(body); //(7)
+        const posts = JSON.parse(body); //(7)
 
         users.push({
           // (8)
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          password: user.password,
+          id: posts.id,
+          title: posts.title,
+          description: posts.description,
+          userId: posts.userId,
         });
 
-        response.end(JSON.stringify({ message: "ok!" })); // (9)
+        response.end(JSON.stringify({ message: "postCreated" }));
       });
     }
   }
 };
-
 server.on("request", httpRequestListener);
 
 server.listen(8000, "127.0.0.1", function () {
