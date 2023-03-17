@@ -33,12 +33,12 @@ const posts = [
     userId: 2,
   },
 ];
-// 보내줄 데이터 pop 데이터
+
 function pop(userTable, posttable) {
   const theradArr = [];
   for (let i = 0; i < users.length; i++) {
     const makeArray = {
-      userId: userTable[i]["id"],
+      userid: userTable[i]["id"],
       userName: userTable[i]["name"],
       postingId: posttable[i]["id"],
       postingTitle: posttable[i]["title"],
@@ -55,12 +55,8 @@ const httpRequestListener = function (request, response) {
   const { url, method } = request;
   if (method === "GET") {
     if (url === "/ping") {
-      //받고
       response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ message: "pong" })); // 보낸다
-    } else if (url === "/posts") {
-      response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ data: "posts" }));
+      response.end(JSON.stringify({ message: "pong" }));
     }
   } else if (method === "POST") {
     // users
