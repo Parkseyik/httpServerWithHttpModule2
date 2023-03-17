@@ -1,6 +1,6 @@
 // app.js
 const http = require("http");
-const { threadId } = require("worker_threads");
+//const { threadId } = require("worker_threads");
 const server = http.createServer();
 
 const users = [
@@ -33,23 +33,28 @@ const posts = [
     userId: 2,
   },
 ];
+
 // 보내줄 데이터 pop 데이터
 function pop(userTable, posttable) {
   const theradArr = [];
   for (let i = 0; i < users.length; i++) {
-    const makeArray = {
-      userId: userTable[i]["id"],
-      userName: userTable[i]["name"],
-      postingId: posttable[i]["id"],
-      postingTitle: posttable[i]["title"],
-      postingContent: posttable[i]["description"],
-    };
-    theradArr.push(makeArray);
+    for (let j = 0; j < posts.length; j++) {
+      if (users[i]["id"] === posts[j]["userId"]) {
+        const makeArray = {
+          userId: userTable[i]["id"],
+          userName: userTable[i]["name"],
+          postingId: posttable[j]["id"],
+          postingTitle: posttable[j]["title"],
+          postingContent: posttable[j]["description"],
+        };
+        theradArr.push(makeArray);
+      }
+    }
   }
   return theradArr;
 }
 
-console.log(pop(users, posts));
+//console.log(pop(users, posts));
 
 const httpRequestListener = function (request, response) {
   const { url, method } = request;
@@ -59,55 +64,66 @@ const httpRequestListener = function (request, response) {
       response.writeHead(200, { "Content-Type": "application/json" });
       response.end(JSON.stringify({ message: "pong" })); // 보낸다
     } else if (url === "/posts") {
+      // posts url
       response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ data: "posts" }));
-    }
-  } else if (method === "POST") {
-    // users
+      response.end(JSON.stringify({ data: posts }));
+    } else if (url === "/users") {
+      // users url
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ data: users }));
+    } else if (url === "/checks") {
+      // checks url
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ data: pop(users, posts) }));
+    } else if (method === "POST") {
+      // users
 
-    if (url === "/users") {
-      let body = "";
+      if (url === "/users") {
+        let body = "";
 
-      request.on("data", (data) => {
-        body += data;
-      });
-
-      // stream을 전부 받아온 이후에 실행
-      request.on("end", () => {
-        const user = JSON.parse(body);
-
-        users.push({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          password: user.password,
+        request.on("data", (data) => {
+          body += data;
         });
 
-        response.end(JSON.stringify({ message: "usersCreated" })); // (9)
-      });
-    }
+        // stream을 전부 받아온 이후에 실행
+        request.on("end", () => {
+          const user = JSON.parse(body);
 
-    // posts
-    else if (url === "/posts") {
-      let body = "";
+          users.push({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            password: user.password,
+          });
+          response.writeHead(200, { "Content-Type": "application/json" });
+          response.end(
+            JSON.stringify({ message: "usersCreated", data: users })
+          ); // (9)
+        });
+      }
 
-      request.on("data", (data) => {
-        body += data;
-      });
+      // posts
+      else if (url === "/posts") {
+        let body = "";
 
-      // stream을 전부 받아온 이후에 실행
-      request.on("end", () => {
-        const posts = JSON.parse(body);
-
-        users.push({
-          id: posts.id,
-          title: posts.title,
-          description: posts.description,
-          userId: posts.userId,
+        request.on("data", (data) => {
+          body += data;
         });
 
-        response.end(JSON.stringify({ message: "postCreated" }));
-      });
+        // stream을 전부 받아온 이후에 실행
+        request.on("end", () => {
+          const post = JSON.parse(body);
+
+          posts.push({
+            id: post.id,
+            title: post.title,
+            description: post.description,
+            userId: post.userId,
+          });
+          response.writeHead(200, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ message: "postCreated", data: posts }));
+        });
+      }
     }
   }
 };
